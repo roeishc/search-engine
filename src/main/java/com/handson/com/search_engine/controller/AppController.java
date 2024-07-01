@@ -1,7 +1,9 @@
 package com.handson.com.search_engine.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.handson.com.search_engine.crawler.Crawler;
+import com.handson.com.search_engine.kafka.Producer;
 import com.handson.com.search_engine.model.CrawlStatus;
 import com.handson.com.search_engine.model.CrawlStatusOut;
 import com.handson.com.search_engine.model.CrawlerRequest;
@@ -24,7 +26,10 @@ public class AppController {
     private final Random random = new Random();
 
     @Autowired
-    Crawler crawler;
+    private Crawler crawler;
+
+    @Autowired
+    private Producer producer;
 
 
     @RequestMapping(value = "/crawl", method = RequestMethod.POST)
@@ -47,6 +52,12 @@ public class AppController {
     @RequestMapping(value = "/crawl/{crawlId}", method = RequestMethod.GET)
     public CrawlStatusOut getCrawl(@PathVariable String crawlId) throws IOException {
         return crawler.getCrawlInfo(crawlId);
+    }
+
+    @PostMapping(value = "/sendKafka")
+    public String sendKafka(@RequestBody CrawlerRequest request) throws JsonProcessingException {
+        producer.send(request);
+        return "OK";
     }
 
     private String generateCrawlId() {
