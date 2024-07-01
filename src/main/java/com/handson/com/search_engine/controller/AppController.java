@@ -4,7 +4,6 @@ package com.handson.com.search_engine.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.handson.com.search_engine.crawler.Crawler;
 import com.handson.com.search_engine.kafka.Producer;
-import com.handson.com.search_engine.model.CrawlStatus;
 import com.handson.com.search_engine.model.CrawlStatusOut;
 import com.handson.com.search_engine.model.CrawlerRequest;
 import org.apache.commons.logging.Log;
