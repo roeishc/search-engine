@@ -13,24 +13,25 @@ import java.util.Optional;
 
 import static com.handson.com.search_engine.kafka.Producer.APP_TOPIC;
 
+
 @Component
 public class Consumer {
 
     @Autowired
-    Crawler crawler;
+    private ObjectMapper om;
 
     @Autowired
-    ObjectMapper om;
+    private Crawler crawler;
+
 
     @KafkaListener(topics = {APP_TOPIC})
     public void listen(ConsumerRecord<?, ?> record) throws IOException, InterruptedException {
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());
         if (kafkaMessage.isPresent()) {
             Object message = kafkaMessage.get();
-            System.out.println("record  ---->" + record);
-            System.out.println("message ---->" + message);
-//            CrawlerRecord rec = om.readValue(message.toString(), CrawlerRecord.class);
-//            crawler.crawlOneUrl(rec);
+            CrawlerRecord rec = om.readValue(message.toString(), CrawlerRecord.class);
+            crawler.crawlOneRecord(rec.getCrawlId(), rec);
         }
     }
+
 }

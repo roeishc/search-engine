@@ -2,6 +2,7 @@ package com.handson.com.search_engine.crawler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.handson.com.search_engine.kafka.Producer;
 import com.handson.com.search_engine.model.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,11 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,33 +21,33 @@ public class Crawler {
 
     protected final Log logger = LogFactory.getLog(getClass());
 
+    public static final int MAX_CAPACITY = 100000;
+
     @Autowired
     private RedisTemplate redisTemplate;
 
     @Autowired
     private ObjectMapper om;
 
-    public static final int MAX_CAPACITY = 100000;
-
-    private BlockingQueue<CrawlerRecord> queue = new ArrayBlockingQueue<>(MAX_CAPACITY);
+    @Autowired
+    private Producer producer;
 
 
     public void crawl(String crawlId, CrawlerRequest crawlerRequest) throws InterruptedException, IOException {
-
         initCrawlInRedis(crawlId);
-        queue.clear();
+        producer.send(CrawlerRecord.of(crawlId, crawlerRequest));
+    }
 
-        queue.put(CrawlerRecord.of(crawlId, crawlerRequest));
+    public void crawlOneRecord(String crawlId, CrawlerRecord rec) throws JsonProcessingException, InterruptedException {
 
-        Document webPageContent = null;
-        while (!queue.isEmpty() && getStopReason(queue.peek()) == null) {
-            CrawlerRecord rec = queue.poll();
-            logger.info("crawling url:" + rec.getUrl());
-            setCrawlStatus(crawlId, CrawlStatus.of(rec.getDistance(), rec.getStartTime(), null, 0, 0));
+        logger.info("crawling url:" + rec.getUrl());
+        StopReason stopReason = getStopReason(rec);
+
+        if (stopReason == null) {
+            Document webPageContent;
             try {
                 webPageContent = Jsoup.connect(rec.getUrl()).get();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 logger.info("skipping url: " + rec.getUrl());
                 webPageContent = null;
                 incSkippedUrls(rec);
@@ -61,13 +58,8 @@ public class Crawler {
             }
         }
 
-        CrawlerRecord rec = queue.peek();
-        StopReason stopReason = null;
-        if (rec != null){
-            stopReason = getStopReason(rec);
-            setCrawlStatus(crawlId, CrawlStatus.of(rec.getDistance(), rec.getStartTime(), stopReason, 0,
-                    rec.getSkippedUrls()));
-        }
+        setCrawlStatus(crawlId, CrawlStatus.of(rec.getDistance(), rec.getStartTime(), stopReason, 0, 0));
+
     }
 
     private StopReason getStopReason(CrawlerRecord rec) {
@@ -80,12 +72,11 @@ public class Crawler {
         return null;
     }
 
-    private void addUrlsToQueue(CrawlerRecord rec, List<String> urls, int distance) throws InterruptedException {
+    private void addUrlsToQueue(CrawlerRecord rec, List<String> urls, int distance) throws JsonProcessingException {
         logger.info(">> adding urls to queue: distance->" + distance + " amount->" + urls.size());
         for (String url : urls) {
-            if (!crawlHasVisited(rec, url)) {
-                queue.put(CrawlerRecord.of(rec).withUrl(url).withIncDistance()) ;
-            }
+            if (!crawlHasVisited(rec, url))
+                producer.send(CrawlerRecord.of(rec).withUrl(url).withIncDistance()); ;
         }
     }
 
@@ -101,7 +92,7 @@ public class Crawler {
 
     private void initCrawlInRedis(String crawlId) throws JsonProcessingException {
         setCrawlStatus(crawlId, CrawlStatus.of(0, System.currentTimeMillis(),null, 0, 0));
-        redisTemplate.opsForValue().set(crawlId + ".urls.count", "1");
+        redisTemplate.opsForValue().set(crawlId + ".urls.count", "0");
         redisTemplate.opsForValue().set(crawlId + ".urls.skippedUrls", "0");
     }
 
@@ -119,7 +110,8 @@ public class Crawler {
     }
 
     private void incSkippedUrls(CrawlerRecord rec){
-        redisTemplate.opsForValue().setIfAbsent(rec.getCrawlId() + ".urls." + rec.getUrl(), "1");
+//        redisTemplate.opsForValue().setIfAbsent(rec.getCrawlId() + ".urls." + rec.getUrl(), "1");
+        crawlHasVisited(rec, rec.getUrl());
         redisTemplate.opsForValue().increment(rec.getCrawlId() + ".urls.skippedUrls", 1L);
     }
 
