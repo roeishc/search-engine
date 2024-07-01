@@ -12,7 +12,7 @@ public class CrawlStatus {
 
     private long numPages = 0;
 
-    private int skippedUrls = 0;
+    private long skippedUrls = 0;
 
 
     public static CrawlStatus of(int distance, long startTime, StopReason stopReason, int numPages, int skippedUrls) {
@@ -50,11 +50,11 @@ public class CrawlStatus {
         this.numPages = numPages;
     }
 
-    public int getSkippedUrls() {
+    public long getSkippedUrls() {
         return skippedUrls;
     }
 
-    public void setSkippedUrls(int skippedUrls) {
+    public void setSkippedUrls(long skippedUrls) {
         this.skippedUrls = skippedUrls;
     }
 

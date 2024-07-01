@@ -15,7 +15,7 @@ public class CrawlStatusOut {
 
     private long numPages = 0;
 
-    private int skippedUrls = 0;
+    private long skippedUrls = 0;
 
     private long startTime;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -66,7 +66,7 @@ public class CrawlStatusOut {
         this.numPages = numPages;
     }
 
-    public int getSkippedUrls() {
+    public long getSkippedUrls() {
         return skippedUrls;
     }
 

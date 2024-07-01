@@ -19,6 +19,8 @@ public class CrawlerRecord {
 
     private int maxUrls;
 
+    private int skippedUrls;
+
 
     public static CrawlerRecord of(String crawlId, CrawlerRequest r) {
         long startTime = System.currentTimeMillis();
@@ -27,6 +29,7 @@ public class CrawlerRecord {
         res.baseUrl = r.url;
         res.url = r.getUrl();
         res.distance = 0;
+        res.skippedUrls = 0;
         res.startTime = startTime;
         res.maxTime = startTime + 1000L * r.maxSeconds;
         res.maxDistance = r.maxDistance;
@@ -44,8 +47,10 @@ public class CrawlerRecord {
         res.startTime = r.startTime;
         res.maxDistance = r.maxDistance;
         res.maxUrls = r.maxUrls;
+        res.skippedUrls = r.skippedUrls;
         return res;
     }
+
     public CrawlerRecord withUrl(String url) {
         this.url = url;
         return this;
@@ -87,5 +92,9 @@ public class CrawlerRecord {
 
     public int getMaxUrls() {
         return maxUrls;
+    }
+
+    public int getSkippedUrls() {
+        return skippedUrls;
     }
 }

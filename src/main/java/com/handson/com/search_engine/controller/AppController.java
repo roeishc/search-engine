@@ -26,14 +26,27 @@ public class AppController {
     @Autowired
     Crawler crawler;
 
+
     @RequestMapping(value = "/crawl", method = RequestMethod.POST)
-    public CrawlStatusOut crawl(@RequestBody CrawlerRequest request) throws IOException, InterruptedException {
+    public String crawl(@RequestBody CrawlerRequest request) throws IOException, InterruptedException {
         String crawlId = generateCrawlId();
-        if (!request.getUrl().startsWith("http"))
+        if (!request.getUrl().startsWith("http")) {
             request.setUrl("https://" + request.getUrl());
-        CrawlStatus res = crawler.crawl(crawlId, request);
-        logger.info(res);
-        return CrawlStatusOut.of(res);
+        }
+        new Thread(()-> {
+            try {
+                crawler.crawl(crawlId, request);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        return crawlId;
+    }
+
+    @RequestMapping(value = "/crawl/{crawlId}", method = RequestMethod.GET)
+    public CrawlStatusOut getCrawl(@PathVariable String crawlId) throws IOException {
+        return crawler.getCrawlInfo(crawlId);
     }
 
     private String generateCrawlId() {
