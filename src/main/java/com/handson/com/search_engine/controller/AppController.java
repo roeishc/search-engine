@@ -53,9 +53,9 @@ public class AppController {
         return crawler.getCrawlInfo(crawlId);
     }
 
-    @PostMapping(value = "/sendKafka")
-    public String sendKafka(@RequestBody CrawlerRequest request) throws JsonProcessingException {
-        producer.send(request);
+    @PostMapping(value = "/sendKafka/{testMessage}")
+    public String sendKafka(@PathVariable String testMessage) {
+        producer.sendTest(testMessage);
         return "OK";
     }
 

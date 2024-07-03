@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 public class Producer {
 
     public static final String APP_TOPIC = "searchengine";
+
+    public static final String TEST_TOPIC = "testtopic";
+
     @Autowired
     ObjectMapper om;
 
@@ -18,6 +21,10 @@ public class Producer {
 
     public void send(Object message) throws JsonProcessingException {
         kafkaTemplate.send(APP_TOPIC, om.writeValueAsString(message));
+    }
+
+    public void sendTest(String testMessage){
+        kafkaTemplate.send(TEST_TOPIC, testMessage);
     }
 
 }

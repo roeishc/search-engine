@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import static com.handson.com.search_engine.kafka.Producer.APP_TOPIC;
+import static com.handson.com.search_engine.kafka.Producer.TEST_TOPIC;
 
 
 @Component
@@ -32,6 +33,12 @@ public class Consumer {
             CrawlerRecord rec = om.readValue(message.toString(), CrawlerRecord.class);
             crawler.crawlOneRecord(rec.getCrawlId(), rec);
         }
+    }
+
+    @KafkaListener(topics = {TEST_TOPIC})
+    public void test(ConsumerRecord<?, ?> record){
+        Optional<?> kafkaMessage = Optional.ofNullable(record.value());
+        kafkaMessage.ifPresent(System.out::println);
     }
 
 }
