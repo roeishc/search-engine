@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.handson.com.search_engine.kafka.Producer;
 import com.handson.com.search_engine.model.*;
+import com.handson.com.search_engine.util.ElasticSearch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.Jsoup;
@@ -32,6 +33,9 @@ public class Crawler {
     @Autowired
     private Producer producer;
 
+    @Autowired
+    private ElasticSearch elasticSearch;
+
 
     public void crawl(String crawlId, CrawlerRequest crawlerRequest) throws InterruptedException, IOException {
         initCrawlInRedis(crawlId);
@@ -53,6 +57,7 @@ public class Crawler {
                 incSkippedUrls(rec);
             }
             if (webPageContent != null) {
+                indexElasticSearch(rec, webPageContent);
                 List<String> innerUrls = extractWebPageUrls(rec.getBaseUrl(), webPageContent);
                 addUrlsToQueue(rec, innerUrls, rec.getDistance() + 1);
             }
@@ -134,6 +139,13 @@ public class Crawler {
         cs.setNumPages(getVisitedUrls(crawlId));
         cs.setSkippedUrls(getSkippedUrls(crawlId));
         return CrawlStatusOut.of(cs);
+    }
+
+    public void indexElasticSearch(CrawlerRecord rec, Document webPageContent) {
+        logger.info(">> adding elastic-search entry for web page: " + rec.getUrl());
+        String text = String.join(" ", webPageContent.select("a[href]").eachText());
+        UrlSearchDoc searchDoc = UrlSearchDoc.of(rec.getCrawlId(), text, rec.getUrl(), rec.getBaseUrl(), rec.getDistance());
+        elasticSearch.addData(searchDoc);
     }
 
 }
