@@ -33,7 +33,7 @@ Creating a new crawl on www.cnn.com via Swagger UI (notice the crawl ID in the r
   <img width="726" src="https://github.com/roeishc/search-engine/assets/95538414/6c6cbde3-45d1-4f2a-96b9-619f7ad9df9c"><br><br>
 </div>
 <br>
-Getting the crawl's status (notice for the stop reason - timeout of 60 seconds):<br><br>
+Getting the crawl's status (notice the stop reason - timeout of 60 seconds):<br><br>
 <div align="center">
   <img src="https://github.com/roeishc/search-engine/assets/95538414/cc482dd8-00ec-4182-b3ad-6808dbabe612"><br><br>
 </div>
